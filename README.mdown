@@ -1,0 +1,79 @@
+## Sinatra HasScope
+
+Sinatra HasScope is a Sinatra adaptation of the very useful 
+
+Sinatra HasScope allows you to easily create filters based on your resources named scopes.
+Imagine the following model called Graduation:
+
+```ruby
+  class Graduation < ActiveRecord::Base
+    scope :featured, where('featured = ?', true)
+    scope :by_degree, lambda { |degree| { where('degree = ?', degree) } }
+  end
+```
+
+You can use those named scopes as filters by declaring them on your routes:
+
+```ruby
+  class MyApp < Sinatra::Base
+    has_scope :gradutation, :featured, :type => :boolean
+    has_scope :gradutation, :by_degree
+    has_scope :gradutation, :by_period, :using => [:started_at, :ended_at]
+  end
+```
+
+Now, if you want to apply them to an specific resource, you just need to call `apply_scopes`:
+
+```ruby
+  get '/graduations' do
+    @graduations = apply_scopes(:graduation, Graduation, params).all
+  end
+```
+
+Then for each request:
+
+    /graduations
+    #=> acts like a normal request
+    
+    /graduations?featured=true
+    #=> calls the named scope and bring featured graduations
+    
+    /graduations?featured=true&by_degree=phd
+    #=> brings featured graduations with phd degree
+    
+    /graduations?params[by_period][started_at]=20100701&params[by_period][ended_at]=20101013
+    #=> brings graduations in the given period
+
+## Installation
+
+Sinatra HasScope is available as gem on Gemcutter, so just run the following:
+
+    sudo gem install sinatra-has_scope
+
+To install it with bundler, use:
+
+    gem 'sinatra-has_scope', :require => 'sinatra/has_scope'
+
+## Options
+
+HasScope supports several options:
+
+* `:type` - Checks the type of the parameter sent. If set to :boolean it just calls the named scope, without any argument. By default, it does not allow hashes or arrays to be given, except if type :hash or :array are set.
+
+* `:as` - The key in the params hash expected to find the scope. Defaults to the scope name.
+
+* `:using` - The subkeys to be used as args when type is a hash.
+
+* `:if` - Specifies a method, proc or string to call to determine if the scope should apply.
+
+* `:unless` - Specifies a method, proc or string to call to determine if the scope should NOT apply.
+
+* `:default` - Default value for the scope. Whenever supplied the scope is always called.
+
+* `:allow_blank` - Blank values are not sent to scopes by default. Set to true to overwrite.
+
+## Bugs and Feedback
+
+If you discover any bugs or want to drop a line, feel free to create an issue on GitHub.
+
+[[http://github.com/simonc/sinatra-has_scope/issues]]
