@@ -1,6 +1,6 @@
 ## Sinatra HasScope
 
-Sinatra HasScope is a Sinatra adaptation of the very useful 
+Sinatra HasScope is a Sinatra adaptation of the very useful [HasScope Rails library](https://github.com/plataformatec/has_scope).
 
 Sinatra HasScope allows you to easily create filters based on your resources named scopes.
 Imagine the following model called Graduation:
@@ -68,6 +68,4 @@ HasScope supports several options:
 
 ## Bugs and Feedback
 
-If you discover any bugs or want to drop a line, feel free to create an issue on GitHub.
-
-http://github.com/simonc/sinatra-has_scope/issues
+If you discover any bugs or want to drop a line, feel free to create an [issue on GitHub](http://github.com/simonc/sinatra-has_scope/issues).
