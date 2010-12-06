@@ -78,20 +78,22 @@ module Sinatra
     def apply_scopes(scope_group, target, hash)
       return target unless scopes_configuration
 
-      self.scopes_configuration[scope_group].each do |scope, options|
-        key = options[:as].to_s
+      if self.scopes_configuration.key?(scope_group)
+        self.scopes_configuration[scope_group].each do |scope, options|
+          key = options[:as].to_s
 
-        if hash.key?(key)
-          value, call_scope = hash[key], true
-        elsif options.key?(:default)
-          value, call_scope = options[:default], true
-          value = value.call(self) if value.is_a?(Proc)
-        end
+          if hash.key?(key)
+            value, call_scope = hash[key], true
+          elsif options.key?(:default)
+            value, call_scope = options[:default], true
+            value = value.call(self) if value.is_a?(Proc)
+          end
 
-        value = parse_value(options[:type], key, value)
+          value = parse_value(options[:type], key, value)
 
-        if call_scope && (value.present? || options[:allow_blank])
-          target = call_scope_by_type(options[:type], scope, target, value, options)
+          if call_scope && (value.present? || options[:allow_blank])
+            target = call_scope_by_type(options[:type], scope, target, value, options)
+          end
         end
       end
 
