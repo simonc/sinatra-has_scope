@@ -5,8 +5,8 @@ Gem::Specification.new do |s|
   s.name        = "sinatra-has_scope"
   s.version     = Sinatra::HasScope::VERSION
   s.platform    = Gem::Platform::RUBY
-  s.authors     = []
-  s.email       = []
+  s.authors     = ['Simon COURTOIS']
+  s.email       = ['scourtois@cubyx.fr']
   s.homepage    = "http://rubygems.org/gems/sinatra-has_scope"
   s.summary     = "HasScope equivalent for Sinatra"
   s.description = "HasScope readaptation for the Sinatra micro-framework"
