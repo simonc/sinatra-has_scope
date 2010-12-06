@@ -5,30 +5,24 @@ Sinatra HasScope is a Sinatra adaptation of the very useful
 Sinatra HasScope allows you to easily create filters based on your resources named scopes.
 Imagine the following model called Graduation:
 
-```ruby
-  class Graduation < ActiveRecord::Base
-    scope :featured, where('featured = ?', true)
-    scope :by_degree, lambda { |degree| { where('degree = ?', degree) } }
-  end
-```
+    class Graduation < ActiveRecord::Base
+      scope :featured, where('featured = ?', true)
+      scope :by_degree, lambda { |degree| { where('degree = ?', degree) } }
+    end
 
 You can use those named scopes as filters by declaring them on your routes:
 
-```ruby
-  class MyApp < Sinatra::Base
-    has_scope :gradutation, :featured, :type => :boolean
-    has_scope :gradutation, :by_degree
-    has_scope :gradutation, :by_period, :using => [:started_at, :ended_at]
-  end
-```
+    class MyApp < Sinatra::Base
+      has_scope :gradutation, :featured, :type => :boolean
+      has_scope :gradutation, :by_degree
+      has_scope :gradutation, :by_period, :using => [:started_at, :ended_at]
+    end
 
 Now, if you want to apply them to an specific resource, you just need to call `apply_scopes`:
 
-```ruby
-  get '/graduations' do
-    @graduations = apply_scopes(:graduation, Graduation, params).all
-  end
-```
+    get '/graduations' do
+      @graduations = apply_scopes(:graduation, Graduation, params).all
+    end
 
 Then for each request:
 
@@ -76,4 +70,4 @@ HasScope supports several options:
 
 If you discover any bugs or want to drop a line, feel free to create an issue on GitHub.
 
-[[http://github.com/simonc/sinatra-has_scope/issues]]
+http://github.com/simonc/sinatra-has_scope/issues
