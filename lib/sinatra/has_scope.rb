@@ -13,6 +13,11 @@ module Sinatra
 
     attr_accessor :scopes_configuration
 
+    def self.registered(base)
+      base.scopes_configuration = { }
+      base.helpers HasScope::Helpers
+    end
+
     # Detects params from url and apply as scopes to your classes.
     #
     # == Options
@@ -66,75 +71,77 @@ module Sinatra
       end
     end
 
-    # Receives an object where scopes will be applied to.
-    #
-    # has_scope :graduation, :featured, :type => true
-    # has_scope :graduation, :by_degree
-    #
-    # get '/graduations' do
-    #   @graduations = apply_scopes(:graduation, Graduation, params).all
-    # end
-    #
-    def apply_scopes(scope_group, target, hash)
-      return target unless scopes_configuration
+    module Helpers
+      # Receives an object where scopes will be applied to.
+      #
+      # has_scope :graduation, :featured, :type => true
+      # has_scope :graduation, :by_degree
+      #
+      # get '/graduations' do
+      #   @graduations = apply_scopes(:graduation, Graduation, params).all
+      # end
+      #
+      def apply_scopes(scope_group, target, hash)
+        return target unless settings.scopes_configuration
 
-      if self.scopes_configuration.key?(scope_group)
-        self.scopes_configuration[scope_group].each do |scope, options|
-          key = options[:as].to_s
+        if settings.scopes_configuration.key?(scope_group)
+          settings.scopes_configuration[scope_group].each do |scope, options|
+            key = options[:as].to_s
 
-          if hash.key?(key)
-            value, call_scope = hash[key], true
-          elsif options.key?(:default)
-            value, call_scope = options[:default], true
-            value = value.call(self) if value.is_a?(Proc)
+            if hash.key?(key)
+              value, call_scope = hash[key], true
+            elsif options.key?(:default)
+              value, call_scope = options[:default], true
+              value = value.call(self) if value.is_a?(Proc)
+            end
+
+            value = parse_value(options[:type], key, value)
+
+            if call_scope && (value.present? || options[:allow_blank])
+              target = call_scope_by_type(options[:type], scope, target, value, options)
+            end
           end
+        end
 
-          value = parse_value(options[:type], key, value)
+        target
+      end
 
-          if call_scope && (value.present? || options[:allow_blank])
-            target = call_scope_by_type(options[:type], scope, target, value, options)
-          end
+      # Set the real value for the current scope if type check.
+      def parse_value(type, key, value) #:nodoc:
+        if type == :boolean
+          TRUE_VALUES.include?(value)
+        elsif value && ALLOWED_TYPES[type].none?{ |klass| value.is_a?(klass) }
+          raise "Expected type :#{type} in params[:#{key}], got #{value.class}"
+        else
+          value
         end
       end
 
-      target
-    end
-
-    # Set the real value for the current scope if type check.
-    def parse_value(type, key, value) #:nodoc:
-      if type == :boolean
-        TRUE_VALUES.include?(value)
-      elsif value && ALLOWED_TYPES[type].none?{ |klass| value.is_a?(klass) }
-        raise "Expected type :#{type} in params[:#{key}], got #{value.class}"
-      else
-        value
-      end
-    end
-
-    # Call the scope taking into account its type.
-    def call_scope_by_type(type, scope, target, value, options) #:nodoc:
-      if type == :boolean
-        target.send(scope)
-      elsif value && options.key?(:using)
-        value = value.values_at(*options[:using])
-        target.send(scope, *value)
-      else
-        target.send(scope, value)
-      end
-    end
-
-    # Evaluates the scope options :if or :unless. Returns true if the proc
-    # method, or string evals to the expected value.
-    def applicable?(string_proc_or_symbol, expected) #:nodoc:
-      case string_proc_or_symbol
-        when String
-          eval(string_proc_or_symbol) == expected
-        when Proc
-          string_proc_or_symbol.call(self) == expected
-        when Symbol
-          send(string_proc_or_symbol) == expected
+      # Call the scope taking into account its type.
+      def call_scope_by_type(type, scope, target, value, options) #:nodoc:
+        if type == :boolean
+          target.send(scope)
+        elsif value && options.key?(:using)
+          value = value.values_at(*options[:using])
+          target.send(scope, *value)
         else
-          true
+          target.send(scope, value)
+        end
+      end
+
+      # Evaluates the scope options :if or :unless. Returns true if the proc
+      # method, or string evals to the expected value.
+      def applicable?(string_proc_or_symbol, expected) #:nodoc:
+        case string_proc_or_symbol
+          when String
+            eval(string_proc_or_symbol) == expected
+          when Proc
+            string_proc_or_symbol.call(self) == expected
+          when Symbol
+            send(string_proc_or_symbol) == expected
+          else
+            true
+        end
       end
     end
   end
